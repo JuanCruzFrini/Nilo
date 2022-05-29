@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:background="@color/white"
+    android:focusable="true"
+    android:clickable="true">
+
+    <ImageView
+        android:id="@+id/imgProducto"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintDimensionRatio="16:9"
+        app:layout_constraintTop_toTopOf="parent"/>
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/txtName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        tools:text="Nombre del producto"
+        android:textAppearance="?attr/textAppearanceHeadline5"
+        android:layout_marginHorizontal="@dimen/common_padding_default"
+        android:layout_marginTop="@dimen/common_padding_default"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/imgProducto"/>
+
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:textAlignment="center"
+        android:text="@string/a_adir_al_carrito"
+        android:textColor="@color/colorOnPrimary"
+        app:icon="@drawable/add_cart_icon"
+        app:iconGravity="textEnd"
+        app:layout_constraintStart_toStartOf="@id/txtName"
+        app:layout_constraintEnd_toEndOf="@id/txtName"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginBottom="@dimen/common_padding_default"
+        android:id="@+id/extendFab"/>
+
+    <ImageButton
+        android:id="@+id/imgBtnRest"
+        android:src="@drawable/remove_icon_filled"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="@id/txtName"
+        app:layout_constraintBottom_toTopOf="@id/extendFab"
+        android:layout_marginBottom="24dp"
+        android:background="?attr/selectableItemBackground"/>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilNewQuantity"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/common_padding_min"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
+        app:layout_constraintStart_toEndOf="@+id/imgBtnRest"
+        app:layout_constraintBottom_toBottomOf="@id/imgBtnRest"
+        app:layout_constraintTop_toTopOf="@id/imgBtnRest">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etNewQuantity"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ems="3"
+            android:textAlignment="center"
+            android:imeOptions="actionDone"
+            android:inputType="number"
+            tools:text="5"/>
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <ImageButton
+        android:id="@+id/imgBtnSum"
+        android:src="@drawable/add_icon_filled"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toEndOf="@id/tilNewQuantity"
+        app:layout_constraintBottom_toBottomOf="@id/imgBtnRest"
+        app:layout_constraintTop_toTopOf="@id/imgBtnRest"
+        android:layout_marginStart="8dp"
+        android:background="?attr/selectableItemBackground"/>
+
+    <com.google.android.material.textview.MaterialTextView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/txtQuantity"
+        android:text="@string/detail_quantity"
+        android:textAppearance="?attr/textAppearanceSubtitle1"
+        android:layout_marginBottom="@dimen/common_padding_default"
+        app:layout_constraintStart_toStartOf="@id/txtName"
+        app:layout_constraintEnd_toEndOf="@id/txtName"
+        app:layout_constraintBottom_toTopOf="@id/imgBtnRest"/>
+
+    <com.google.android.material.textview.MaterialTextView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/txtTotalPrice"
+        android:text="@string/detail_total_price"
+        android:textAppearance="?attr/textAppearanceSubtitle2"
+        app:layout_constraintStart_toEndOf="@id/imgBtnSum"
+        app:layout_constraintEnd_toEndOf="@id/txtName"
+        app:layout_constraintTop_toTopOf="@id/imgBtnRest"
+        android:layout_marginStart="16dp"
+        app:layout_constraintBottom_toBottomOf="@id/imgBtnRest"/>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginVertical="@dimen/common_padding_default"
+        app:layout_constraintStart_toStartOf="@id/txtName"
+        app:layout_constraintTop_toBottomOf="@id/txtName"
+        app:layout_constraintBottom_toTopOf="@id/txtQuantity"
+        app:layout_constraintEnd_toEndOf="@id/txtName">
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/txtDescripcion"
+            android:textAppearance="?attr/textAppearanceBody1"
+            tools:text="Descripcion del producto"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
