@@ -3,12 +3,15 @@ package com.example.nilo
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.edit
 import androidx.core.view.isVisible
+import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.GridLayoutManager
 import com.example.cart.CartFragment
 import com.example.detail.DetailFragment
@@ -21,6 +24,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.messaging.FirebaseMessaging
 
 class MainActivity : AppCompatActivity(), OnProductListener,MainAux {
 
@@ -44,6 +48,9 @@ class MainActivity : AppCompatActivity(), OnProductListener,MainAux {
         configAuth()
         setRecyclerView()
         configButtons()
+
+        //FCM, asi se consulta el token manualmente
+        //consultarToken()
     }
 
     private fun configAuth() {
@@ -83,6 +90,28 @@ class MainActivity : AppCompatActivity(), OnProductListener,MainAux {
                 val user = FirebaseAuth.getInstance().currentUser
                 if (user != null) {
                     Toast.makeText(this, "Bienvenido", Toast.LENGTH_SHORT).show()
+
+                    //obtenemos el token de usuario
+                    val preferences = PreferenceManager.getDefaultSharedPreferences(this)
+                    val token = preferences.getString(Constants.PROP_TOKEN, null)
+                    token?.let {
+                        val db = FirebaseFirestore.getInstance()
+                        val tokenMap = hashMapOf(Pair(Constants.PROP_TOKEN, token))
+                        db.collection(Constants.COLL_USERS)
+                            .document(user.uid)
+                            .collection(Constants.COLL_TOKENS)
+                            .add(tokenMap)
+                            .addOnSuccessListener {
+                                Log.i("registered token", token)
+                                preferences.edit {
+                                    putString(Constants.PROP_TOKEN, null)
+                                        .apply()
+                                }
+                            }
+                            .addOnFailureListener {
+                                Log.i("not registered token", token)
+                            }
+                    }
                 }
             } else {
                 if (response == null) {
@@ -119,6 +148,18 @@ class MainActivity : AppCompatActivity(), OnProductListener,MainAux {
                 supportFragmentManager.beginTransaction(),
                 CartFragment::class.java.simpleName
             )
+        }
+    }
+
+    //FCM
+    fun consultarToken() {
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val token = task.result
+                Log.i("get token", token.toString())
+            } else {
+                Log.i("get token fail", task.exception.toString())
+            }
         }
     }
 

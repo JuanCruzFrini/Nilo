@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.message.ChatFragment
 import com.example.nilo.Constants
 import com.example.nilo.ProductAdapter
 import com.example.nilo.R
@@ -50,7 +51,13 @@ class OrderActivity : AppCompatActivity(), OnOrderListener, OrderAux{
     }
 
     override fun onStartChat(order: Order) {
-        TODO("Not yet implemented")
+        orderSelected = order
+        val fragment = ChatFragment()
+        supportFragmentManager
+            .beginTransaction()
+            .add(R.id.containerMain, fragment)
+            .addToBackStack(null)
+            .commit()
     }
 
     override fun getOrderSelected(): Order = orderSelected
@@ -69,8 +76,5 @@ class OrderActivity : AppCompatActivity(), OnOrderListener, OrderAux{
             .addOnFailureListener {
                 Toast.makeText(this, "Error al consultar los datos", Toast.LENGTH_SHORT).show()
             }
-
     }
-
-
 }
