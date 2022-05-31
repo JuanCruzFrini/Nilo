@@ -13,4 +13,7 @@ object Constants {
     const val PATH_CHATS = "chats"
     //token Firebase cloud Messaging
     const val PROP_TOKEN = "token"
+
+    //Analytics
+    const val USER_PROP_QUANTITY = "quantity_producto"
 }

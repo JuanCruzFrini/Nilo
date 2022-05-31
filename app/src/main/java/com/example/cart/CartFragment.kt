@@ -15,6 +15,9 @@ import com.example.order.OrderActivity
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.analytics.ktx.logEvent
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
@@ -26,6 +29,8 @@ class CartFragment : BottomSheetDialogFragment(), OnCartListener {
 
     private lateinit var adapter:ProductCartAdapter
     private var totalPrice = 0.0
+
+    private lateinit var firebaseAnalytics: FirebaseAnalytics
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         binding = FragmentCartBinding.inflate(LayoutInflater.from(activity))
@@ -39,6 +44,7 @@ class CartFragment : BottomSheetDialogFragment(), OnCartListener {
             setRecyclerView()
             setUpButtons()
             getProductos()
+            configAnalytics()
             return bottomSheetDialog
         }
         return super.onCreateDialog(savedInstanceState)
@@ -108,6 +114,21 @@ class CartFragment : BottomSheetDialogFragment(), OnCartListener {
                     (activity as? MainAux)?.clearCart()
                     startActivity(Intent(context, OrderActivity::class.java))
                     Toast.makeText(activity, "Compra realizada", Toast.LENGTH_SHORT).show()
+
+                    //Analytics
+                    firebaseAnalytics.logEvent(FirebaseAnalytics.Event.ADD_PAYMENT_INFO){
+                        val productos = mutableListOf<Bundle>()
+                        order.products.forEach {
+                            if (it.value.quantity > 5){
+                                val bundle = Bundle()
+                                bundle.putString("id_producto", it.key)
+                                productos.add(bundle)
+                            }
+                        }
+                        param(FirebaseAnalytics.Param.QUANTITY, productos.toTypedArray())
+                    }
+                    firebaseAnalytics.setUserProperty(Constants.USER_PROP_QUANTITY,
+                        if (productos.size > 0) "con_mayoreo" else "sin_mayoreo")
                 }
                 .addOnFailureListener {
                     Toast.makeText(activity, "Error al comprar", Toast.LENGTH_SHORT).show()
@@ -123,6 +144,11 @@ class CartFragment : BottomSheetDialogFragment(), OnCartListener {
             adapter.addProduct(it)
         }
     }
+
+    private fun configAnalytics(){
+        firebaseAnalytics = Firebase.analytics
+    }
+
 
     private fun enableUi(enable:Boolean){
         binding?.let {

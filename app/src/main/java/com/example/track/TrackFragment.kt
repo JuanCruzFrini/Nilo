@@ -13,12 +13,18 @@ import com.example.nilo.R
 import com.example.nilo.databinding.FragmentTrackBinding
 import com.example.order.Order
 import com.example.order.OrderActivity
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.analytics.ktx.logEvent
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.ktx.Firebase
 
 class TrackFragment : Fragment(){
     private var binding:FragmentTrackBinding? = null
 
     private var order:Order? = null
+
+    private lateinit var firebaseAnalytics: FirebaseAnalytics
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -47,6 +53,14 @@ class TrackFragment : Fragment(){
             getOrderInRealTime(it.id)
 
             setUpActionBar()
+            configAnalytics()
+        }
+    }
+
+    private fun configAnalytics() {
+        firebaseAnalytics = Firebase.analytics
+        firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SCREEN_VIEW){
+            param(FirebaseAnalytics.Param.METHOD, "check_track")
         }
     }
 

@@ -20,10 +20,14 @@ import com.example.order.OrderActivity
 import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.ErrorCodes
 import com.firebase.ui.auth.IdpResponse
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.analytics.ktx.logEvent
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.FirebaseMessaging
 
 class MainActivity : AppCompatActivity(), OnProductListener,MainAux {
@@ -39,6 +43,7 @@ class MainActivity : AppCompatActivity(), OnProductListener,MainAux {
     private var productoSelected:Producto? = null
     val proudctCartList = mutableListOf<Producto>()
 
+    private lateinit var firebaseAnalytics: FirebaseAnalytics
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,6 +53,7 @@ class MainActivity : AppCompatActivity(), OnProductListener,MainAux {
         configAuth()
         setRecyclerView()
         configButtons()
+        configAnalytics()
 
         //FCM, asi se consulta el token manualmente
         //consultarToken()
@@ -151,6 +157,10 @@ class MainActivity : AppCompatActivity(), OnProductListener,MainAux {
         }
     }
 
+    private fun configAnalytics(){
+        firebaseAnalytics = Firebase.analytics
+    }
+
     //FCM
     fun consultarToken() {
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
@@ -247,6 +257,12 @@ class MainActivity : AppCompatActivity(), OnProductListener,MainAux {
             .commit()
 
         showButton(false)
+
+        //Analytics
+        firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_ITEM){
+            param(FirebaseAnalytics.Param.ITEM_ID, producto.id!!)
+            param(FirebaseAnalytics.Param.ITEM_NAME, producto.name!!)
+        }
     }
 
     override fun getProductsCart(): MutableList<Producto> = proudctCartList

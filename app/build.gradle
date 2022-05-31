@@ -55,6 +55,9 @@ dependencies {
     //Firebase Cloud Messaging
     implementation 'com.google.firebase:firebase-messaging-ktx'
 
+    //Firebase Cloud Messaging
+    implementation 'com.google.firebase:firebase-analytics-ktx'
+
     //preferences impl
     implementation 'androidx.preference:preference:1.1.0-alpha04'
 
