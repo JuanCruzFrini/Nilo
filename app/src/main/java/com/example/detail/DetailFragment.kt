@@ -6,13 +6,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.text.HtmlCompat
+import androidx.core.view.marginTop
 import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.example.nilo.MainAux
-import com.example.nilo.Producto
-import com.example.nilo.R
+import com.example.nilo.*
 import com.example.nilo.databinding.FragmentDetailBinding
+import com.google.firebase.storage.FirebaseStorage
 
 class DetailFragment : Fragment() {
     private var binding: FragmentDetailBinding? = null
@@ -37,20 +37,39 @@ class DetailFragment : Fragment() {
     private fun getProducto() {
        producto = (activity as? MainAux)?.getProductoSelected()
         producto?.let { producto->
-            binding?.let {
-                it.txtName.text = producto.name
-                it.txtDescripcion.text = producto.description
-                //it.txtQuantity.append(producto.quantity.toString())
-                it.txtQuantity.text = getString(R.string.detail_quantity, producto.quantity)
+            binding?.let { binding ->
+                binding.txtName.text = producto.name
+                binding.txtDescripcion.text = producto.description
+                //binding.txtQuantity.append(producto.quantity.toString())
+                binding.txtQuantity.text = getString(R.string.detail_quantity, producto.quantity)
                 setNewQuantity(producto)
 
+                if (!producto.sellerId.isNullOrEmpty()){
+                    context?.let { context ->
+                        val productoRef = FirebaseStorage.getInstance().reference
+                            .child(producto.sellerId)
+                            .child(Constants.PATH_IMAGE)
+                            .child(producto.id!!)
 
-                Glide.with(requireContext())
-                    .load(producto.imgUrl)
-                    .placeholder(R.drawable.time_lapse)
-                    .error(R.drawable.broken_image)
-                    .diskCacheStrategy(DiskCacheStrategy.ALL)
-                    .into(it.imgProducto)
+                        productoRef.listAll()
+                            .addOnSuccessListener { imageList ->
+                                val detailAdapter = DetailAdapter(imageList.items, context)
+                                binding.viewPagerProducto.apply {
+                                    adapter = detailAdapter
+                                }
+                            }
+                    }
+                } else {
+                    //arreglar constraint
+                    binding.imgProducto.show()
+                    binding.viewPagerProducto.hide()
+                    Glide.with(requireContext())
+                        .load(producto.imgUrl)
+                        .placeholder(R.drawable.time_lapse)
+                        .error(R.drawable.broken_image)
+                        .diskCacheStrategy(DiskCacheStrategy.ALL)
+                        .into(binding.imgProducto)
+                }
             }
         }
     }

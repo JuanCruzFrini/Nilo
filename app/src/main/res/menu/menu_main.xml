@@ -8,8 +8,25 @@
 
     <item
         android:id="@+id/action_order_history"
-        android:title=""
+        android:title="Historial de compras"
         android:icon="@drawable/history_icon"
+        app:showAsAction="never"/>
+
+    <item
+        android:id="@+id/action_settings"
+        android:title="Configuracion"
+        app:showAsAction="never"/>
+
+    <item
+        android:id="@+id/action_profile"
+        android:title="Editar perfil"
+        android:icon="@drawable/history_icon"
+        app:showAsAction="never"/>
+
+    <item
+        android:id="@+id/action_promo"
+        android:title=""
+        android:icon="@drawable/ofertas_icon"
         app:showAsAction="ifRoom"/>
 
 </menu>

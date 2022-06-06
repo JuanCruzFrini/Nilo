@@ -19,6 +19,7 @@ import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.analytics.ktx.analytics
 import com.google.firebase.analytics.ktx.logEvent
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
 
@@ -90,7 +91,8 @@ class CartFragment : BottomSheetDialogFragment(), OnCartListener {
                 bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
             }
             it.extendFab.setOnClickListener {
-                requestOrder()
+                //requestOrder()
+                requestOrderTransaction()
             }
         }
     }
@@ -138,6 +140,73 @@ class CartFragment : BottomSheetDialogFragment(), OnCartListener {
                 }
         }
     }
+
+    private fun requestOrderTransaction() {
+        val user = FirebaseAuth.getInstance().currentUser
+        user?.let { myUser ->
+            enableUi(false)
+            val productos = hashMapOf<String, ProductoOrder>()
+            adapter.getProductos().forEach {
+                productos.put(it.id!!, ProductoOrder(it.id!!, it.name!!, it.newQuantity))
+            }
+
+            val order = Order(
+                clientId = myUser.uid,
+                products = productos,
+                totalPrice = totalPrice,
+                status = 1
+            )
+
+            val db = FirebaseFirestore.getInstance()
+
+            val requestDoc = db.collection(Constants.COLL_REQUESTS).document()
+            val productosRef = db.collection(Constants.COLL_PRODUCTOS)
+
+            //Con esto FB hace una lectura de la cant. actual de este campo
+            //Transaccion por lotes
+            db.runBatch { batch ->
+                batch.set(requestDoc, order)
+                order.products.forEach {
+                    //actualizamos el stock luego de la compra
+                    batch.update(
+                        productosRef.document(it.key),
+                        Constants.PROP_QUANTITY,
+                        FieldValue.increment(-it.value.quantity.toLong())
+                    )
+                }
+            }
+                .addOnSuccessListener {
+                    dismiss()
+                    (activity as? MainAux)?.clearCart()
+                    startActivity(Intent(context, OrderActivity::class.java))
+                    Toast.makeText(activity, "Compra realizada", Toast.LENGTH_SHORT).show()
+
+                    //Analytics
+                    firebaseAnalytics.logEvent(FirebaseAnalytics.Event.ADD_PAYMENT_INFO) {
+                        val productos = mutableListOf<Bundle>()
+                        order.products.forEach {
+                            if (it.value.quantity > 5) {
+                                val bundle = Bundle()
+                                bundle.putString("id_producto", it.key)
+                                productos.add(bundle)
+                            }
+                        }
+                        param(FirebaseAnalytics.Param.QUANTITY, productos.toTypedArray())
+                    }
+                    firebaseAnalytics.setUserProperty(
+                        Constants.USER_PROP_QUANTITY,
+                        if (productos.size > 0) "con_mayoreo" else "sin_mayoreo"
+                    )
+                }
+                .addOnFailureListener {
+                    Toast.makeText(activity, "Error al comprar", Toast.LENGTH_SHORT).show()
+                }
+                .addOnCompleteListener {
+                    enableUi(true)
+                }
+        }
+    }
+
 
     private fun getProductos(){
         (activity as? MainAux)?.getProductsCart()?.forEach {

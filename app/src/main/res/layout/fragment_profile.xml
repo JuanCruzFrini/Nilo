@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    android:focusable="true"
+    android:clickable="true"
+    android:padding="@dimen/common_padding_default"
+    android:gravity="center_horizontal">
+
+    <ImageButton
+        android:id="@+id/imgBtnProfile"
+        android:layout_width="@dimen/login_width_button"
+        android:layout_height="@dimen/login_width_button"
+        android:background="?attr/selectableItemBackground"/>
+
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+        android:layout_width="@dimen/login_width_button"
+        android:layout_height="wrap_content"
+        android:visibility="invisible"
+        tools:visibility="visible"
+        tools:progress="75"
+        android:id="@+id/progress_bar" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/txtProgress"
+        android:layout_marginTop="@dimen/common_padding_min"
+        tools:text="Subiendo 75%" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="240dp"
+        android:layout_height="wrap_content"
+        android:hint="Nombre completo"
+        android:layout_marginTop="8dp"
+        app:endIconMode="clear_text"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/etFullName"
+            android:inputType="textPersonName" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+<!--
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="240dp"
+        android:layout_height="wrap_content"
+        android:hint="Url de la foto"
+        android:layout_marginTop="8dp"
+        app:endIconMode="clear_text"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/etPhotoUrl"
+            android:inputType="textUri" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+-->
+
+    <com.google.android.material.button.MaterialButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/btnUpdate"
+        android:text="Actualizar perfil"/>
+
+</LinearLayout>

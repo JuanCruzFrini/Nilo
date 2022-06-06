@@ -6,4 +6,5 @@
     <dimen name="producto_preview_cart_height">80dp</dimen>
     <dimen name="chat_guideline_end">48dp</dimen>
     <dimen name="chat_margin_horizontal">64dp</dimen>
+    <dimen name="login_width_button">160dp</dimen>
 </resources>

@@ -1,8 +1,12 @@
 package com.example.nilo
 
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.provider.ContactsContract
+import android.util.Base64
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
@@ -17,18 +21,30 @@ import com.example.cart.CartFragment
 import com.example.detail.DetailFragment
 import com.example.nilo.databinding.ActivityMainBinding
 import com.example.order.OrderActivity
+import com.example.profile.ProfileFragment
+import com.example.promo.PromoFragment
+import com.example.settings.SettingsActivity
+import com.firebase.ui.auth.AuthMethodPickerLayout
 import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.ErrorCodes
 import com.firebase.ui.auth.IdpResponse
+import com.google.android.material.badge.BadgeDrawable
+import com.google.android.material.badge.BadgeUtils
+import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.analytics.ktx.analytics
 import com.google.firebase.analytics.ktx.logEvent
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.Query
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.FirebaseMessaging
+import com.google.firebase.remoteconfig.ktx.remoteConfig
+import com.google.firebase.remoteconfig.ktx.remoteConfigSettings
+import java.security.MessageDigest
 
 class MainActivity : AppCompatActivity(), OnProductListener,MainAux {
 
@@ -39,6 +55,7 @@ class MainActivity : AppCompatActivity(), OnProductListener,MainAux {
     private lateinit var adapter: ProductAdapter
 
     private lateinit var firestoreListener: ListenerRegistration
+    private var queryPagination:Query? = null
 
     private var productoSelected:Producto? = null
     val proudctCartList = mutableListOf<Producto>()
@@ -54,9 +71,49 @@ class MainActivity : AppCompatActivity(), OnProductListener,MainAux {
         setRecyclerView()
         configButtons()
         configAnalytics()
+        configRemoteConfig()
+        configToolbar()
 
         //FCM, asi se consulta el token manualmente
         //consultarToken()
+    }
+
+    private fun configToolbar() {
+        setSupportActionBar(binding.toolbar)
+    }
+
+    private fun configRemoteConfig() {
+        val remoteConfig = Firebase.remoteConfig
+
+        val configSettings = remoteConfigSettings{
+            minimumFetchIntervalInSeconds = 5 // 3600 = 1hs en segundos
+        }
+        remoteConfig.setConfigSettingsAsync(configSettings)
+
+        remoteConfig.setDefaultsAsync(R.xml.remote_config_default)
+
+        remoteConfig.fetchAndActivate()
+           /* .addOnSuccessListener {
+                Snackbar.make(binding.root, "Datos locales/remotos", Snackbar.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener {
+                Snackbar.make(binding.root, "Datos locales", Snackbar.LENGTH_SHORT).show()
+            }*/
+            .addOnCompleteListener {
+                if (it.isSuccessful){
+                    val isPromoDay = remoteConfig.getBoolean("isPromoDay")
+                    val promCounter = remoteConfig.getLong("promCounter")
+                    val percentaje = remoteConfig.getDouble("percentaje")
+                    val photoUrl = remoteConfig.getString("photoUrl")
+                    val message = remoteConfig.getString("message")
+
+                    if (isPromoDay){
+                        val badge = BadgeDrawable.create(this)
+                        BadgeUtils.attachBadgeDrawable(badge, binding.toolbar, R.id.action_promo)//bug
+                        badge.number = promCounter.toInt()
+                    }
+                }
+            }
     }
 
     private fun configAuth() {
@@ -64,7 +121,8 @@ class MainActivity : AppCompatActivity(), OnProductListener,MainAux {
         authStateListener = FirebaseAuth.AuthStateListener { auth ->
             //si hay un usuario activo
             if (auth.currentUser != null) {
-                supportActionBar?.title = auth.currentUser?.displayName
+                //supportActionBar?.title = auth.currentUser?.displayName
+                updateTitle(auth.currentUser!!)
                 binding.NestScrollView.show()
                 binding.progressLayout.hide()
             } else {
@@ -72,8 +130,19 @@ class MainActivity : AppCompatActivity(), OnProductListener,MainAux {
                 //proveedores de login
                 val providers = arrayListOf(
                     AuthUI.IdpConfig.EmailBuilder().build(),
-                    AuthUI.IdpConfig.GoogleBuilder().build()
+                    AuthUI.IdpConfig.GoogleBuilder().build(),
+                    AuthUI.IdpConfig.FacebookBuilder().build()
+                    /*AuthUI.IdpConfig.PhoneBuilder().build()*/
                 )
+
+                //Layout personalizada para el login
+                val loginView = AuthMethodPickerLayout
+                    .Builder(R.layout.view_login)
+                    .setEmailButtonId(R.id.btnEmail)
+                    .setGoogleButtonId(R.id.btnGoogle)
+                    .setFacebookButtonId(R.id.btnFacebook)
+                    .setTosAndPrivacyPolicyId(R.id.txtPolicy)
+                    .build()
 
                 //creamos el UI de autenticacion/login
                 resultLauncher.launch(
@@ -81,10 +150,35 @@ class MainActivity : AppCompatActivity(), OnProductListener,MainAux {
                         .createSignInIntentBuilder()
                         .setAvailableProviders(providers)
                         .setIsSmartLockEnabled(false)
+                        .setTosAndPrivacyPolicyUrls("https://github.com","https://github.com")
+                        .setAuthMethodPickerLayout(loginView)
+                        .setTheme(R.style.LoginTheme)
                         .build()
                 )
             }
         }
+        //try catch exclusivo para Facebook auth
+        //lo pide el paso #4, nos imprime la clave hash necesaria para el mismo(developers.facebook.com)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                val info = packageManager.getPackageInfo("com.example.nilo", PackageManager.GET_SIGNING_CERTIFICATES)
+                for (signature in info.signingInfo.apkContentsSigners) {
+                    val md = MessageDigest.getInstance("SHA");
+                    md.update(signature.toByteArray());
+                    Log.d("API >= 28 KeyHash:", Base64.encodeToString(md.digest(), Base64.DEFAULT));
+                }
+            } else {
+                val info = packageManager.getPackageInfo("com.example.nilo", PackageManager.GET_SIGNATURES);
+                for (signature in info.signatures) {
+                    val md = MessageDigest.getInstance("SHA");
+                    md.update(signature.toByteArray());
+                    Log.d("API < 28 KeyHash:", Base64.encodeToString(md.digest(), Base64.DEFAULT));
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
     }
 
     //launcher para autenticacion/login
@@ -140,7 +234,7 @@ class MainActivity : AppCompatActivity(), OnProductListener,MainAux {
         }
 
     private fun setRecyclerView() {
-        adapter = ProductAdapter(mutableListOf(), this)
+        adapter = ProductAdapter(mutableListOf(Producto()), this)
         binding.recyclerView.let {
             it.layoutManager = GridLayoutManager(this@MainActivity, 3)
             it.adapter = adapter
@@ -178,21 +272,31 @@ class MainActivity : AppCompatActivity(), OnProductListener,MainAux {
         val db = FirebaseFirestore.getInstance()
         val productRef = db.collection(Constants.COLL_PRODUCTOS)
 
-        firestoreListener = productRef.addSnapshotListener { snapshots, error ->
-            if (error != null) {
-                Toast.makeText(this, "Error ${error.message}", Toast.LENGTH_SHORT).show()
-                return@addSnapshotListener
-            }
-            for (snapshot in snapshots!!.documentChanges) {
-                val producto = snapshot.document.toObject(Producto::class.java)
-                producto.id = snapshot.document.id
-                when (snapshot.type) {
-                    DocumentChange.Type.ADDED -> adapter.addProduct(producto)
-                    DocumentChange.Type.MODIFIED -> adapter.updateProduct(producto)
-                    DocumentChange.Type.REMOVED -> adapter.deleteProduct(producto)
+        firestoreListener = productRef
+            .limit(6) //pagination
+            .addSnapshotListener { snapshots, error ->
+                if (error != null) {
+                    Toast.makeText(this, "Error ${error.message}", Toast.LENGTH_SHORT).show()
+                    return@addSnapshotListener
+                }
+                snapshots?.let { items->
+                    //pagination
+                    val lastItem = items.documents[items.size() - 1]
+                    queryPagination = productRef
+                        .startAfter(lastItem)
+                        .limit(6)
+
+                    for (snapshot in snapshots!!.documentChanges) {
+                        val producto = snapshot.document.toObject(Producto::class.java)
+                        producto.id = snapshot.document.id
+                        when (snapshot.type) {
+                            DocumentChange.Type.ADDED -> adapter.addProduct(producto)
+                            DocumentChange.Type.MODIFIED -> adapter.updateProduct(producto)
+                            DocumentChange.Type.REMOVED -> adapter.deleteProduct(producto)
+                        }
+                    }
                 }
             }
-        }
     }
 
     override fun onResume() {
@@ -217,12 +321,40 @@ class MainActivity : AppCompatActivity(), OnProductListener,MainAux {
         when (item.itemId) {
             R.id.action_sign_out -> cerrarSesion()
             R.id.action_order_history -> openHistory()
+            R.id.action_profile -> openProfile()
+            R.id.action_settings -> openSettings()
+            R.id.action_promo -> openPromos()
+
         }
         return true
     }
 
+    private fun openSettings() {
+        startActivity(Intent(this, SettingsActivity::class.java))
+    }
+
+    private fun openProfile() {
+        val fragment = ProfileFragment()
+        supportFragmentManager
+            .beginTransaction()
+            .add(R.id.container_main, fragment)
+            .addToBackStack(null)
+            .commit()
+        showButton(false)
+    }
+
     private fun openHistory() {
         startActivity(Intent(this, OrderActivity::class.java))
+    }
+
+    private fun openPromos() {
+        val fragment = PromoFragment()
+        supportFragmentManager
+            .beginTransaction()
+            .add(R.id.container_main, fragment)
+            .addToBackStack(null)
+            .commit()
+        showButton(false)
     }
 
     private fun cerrarSesion() {
@@ -265,6 +397,38 @@ class MainActivity : AppCompatActivity(), OnProductListener,MainAux {
         }
     }
 
+    //pagination
+    override fun loadMore() {
+        val db = FirebaseFirestore.getInstance()
+        val productRef = db.collection(Constants.COLL_PRODUCTOS)
+
+        queryPagination?.let {
+            it.addSnapshotListener { snapshots, error ->
+                if (error != null) {
+                    Toast.makeText(this, "Error ${error.message}", Toast.LENGTH_SHORT).show()
+                    return@addSnapshotListener
+                }
+                snapshots?.let { items ->
+                    //pagination
+                    val lastItem = items.documents[items.size() - 1]
+                    queryPagination = productRef
+                        .startAfter(lastItem)
+                        .limit(6)
+
+                    for (snapshot in snapshots!!.documentChanges) {
+                        val producto = snapshot.document.toObject(Producto::class.java)
+                        producto.id = snapshot.document.id
+                        when (snapshot.type) {
+                            DocumentChange.Type.ADDED -> adapter.addProduct(producto)
+                            DocumentChange.Type.MODIFIED -> adapter.updateProduct(producto)
+                            DocumentChange.Type.REMOVED -> adapter.deleteProduct(producto)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     override fun getProductsCart(): MutableList<Producto> = proudctCartList
 
     override fun getProductoSelected(): Producto? = productoSelected
@@ -297,6 +461,10 @@ class MainActivity : AppCompatActivity(), OnProductListener,MainAux {
 
     override fun clearCart() {
         proudctCartList.clear()
+    }
+
+    override fun updateTitle(user: FirebaseUser) {
+        supportActionBar?.title = user.displayName
     }
 }
 fun View.hide() { visibility = View.GONE }

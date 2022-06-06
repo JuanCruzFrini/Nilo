@@ -25,4 +25,14 @@
     <string name="notification_channel_id_default">general</string>
     <string name="notification_channel_name_default">Generales</string>
 
+    <string name="facebook_application_id" translatable="false">749803416374790</string>
+    <!-- Facebook Application ID, prefixed by 'fb'. Enables Chrome Custom tabs. -->
+    <string name="facebook_login_protocol_scheme" translatable="false">fb749803416374790</string>
+    <string name="profile_title">Perfil de usuario</string>
+    <string name="prefs_fcm_title">Recibir notificaciones</string>
+    <string name="pref_offers_key">pref_offers</string>
+    <string name="pref_offers_title">Ofertas y promociones</string>
+    <string name="settings_topic_offers">topic_offers</string>
+
+
 </resources>

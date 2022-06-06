@@ -72,6 +72,7 @@ class TrackFragment : Fragment(){
         }
     }
 
+    //damos funcionalidad al boton de retroceso en la toolbar
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == android.R.id.home){
             activity?.onBackPressed()

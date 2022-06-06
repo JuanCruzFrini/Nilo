@@ -58,6 +58,20 @@ dependencies {
     //Firebase Cloud Messaging
     implementation 'com.google.firebase:firebase-analytics-ktx'
 
+    //Firebase Cloud Storage
+    implementation 'com.google.firebase:firebase-storage-ktx'
+
+    //Firebase UI Cloud Storage
+    implementation 'com.firebaseui:firebase-ui-storage:7.2.0'
+
+    //Firebase Remote Config
+    implementation 'com.google.firebase:firebase-config-ktx'
+
+
+    // Required only if Facebook login support is required
+    // Find the latest Facebook SDK releases here: https://github.com/facebook/facebook-android-sdk/blob/master/CHANGELOG.md
+    implementation 'com.facebook.android:facebook-login:8.1.0'
+
     //preferences impl
     implementation 'androidx.preference:preference:1.1.0-alpha04'
 

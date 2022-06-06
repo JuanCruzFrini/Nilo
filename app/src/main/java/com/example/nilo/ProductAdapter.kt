@@ -17,14 +17,27 @@ class ProductAdapter(
         ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.item_producto, parent, false))
 
     override fun onBindViewHolder(holder: ProductAdapter.ViewHolder, position: Int) {
-        holder.setListener(productList[position])
+        val producto = productList[position]
 
-        holder.binding.txtName.text = productList[position].name
-        holder.binding.txtPrecio.text = productList[position].price.toString()
-        holder.binding.txtQuantity.text = productList[position].quantity.toString()
+        holder.setListener(producto)
+        if (producto.id == null) {
+            if (producto.id == null && productList.indexOf(producto) == productList.size - 1){
+                holder.binding.btnMore.hide()
+            }
+            holder.binding.btnMore.show()
+            holder.binding.containerProducto.hide()
+        }
+        else {
+            holder.binding.btnMore.hide()
+            holder.binding.containerProducto.show()
+        }
+
+        holder.binding.txtName.text = producto.name
+        holder.binding.txtPrecio.text = producto.price.toString()
+        holder.binding.txtQuantity.text = producto.quantity.toString()
 
         Glide.with(holder.itemView.context)
-            .load(productList[position].imgUrl)
+            .load(producto.imgUrl)
             .placeholder(R.drawable.time_lapse)
             .error(R.drawable.broken_image)
             .diskCacheStrategy(DiskCacheStrategy.ALL)
@@ -34,10 +47,11 @@ class ProductAdapter(
     override fun getItemCount(): Int = productList.size
 
     //agrega producto a Firestore
-    fun addProduct(producto: Producto){
-        if (!productList.contains(producto)){
-            productList.add(producto)
-            notifyItemInserted(productList.size - 1)
+    fun addProduct(producto: Producto) {
+        if (!productList.contains(producto)) {
+            //productList.add(producto)
+            productList.add(productList.size - 1, producto)
+            notifyItemInserted(productList.size - 2)
         } else {
             updateProduct(producto)
         }
@@ -67,6 +81,9 @@ class ProductAdapter(
         fun setListener(producto: Producto){
             binding.root.setOnClickListener {
                 listener.onClick(producto)
+            }
+            binding.btnMore.setOnClickListener {
+                listener.loadMore()
             }
         }
     }

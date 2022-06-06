@@ -11,7 +11,9 @@ import com.example.nilo.R
 import com.example.nilo.databinding.ActivityOrderBinding
 import com.example.track.OrderAux
 import com.example.track.TrackFragment
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.toObject
 
 class OrderActivity : AppCompatActivity(), OnOrderListener, OrderAux{
@@ -63,18 +65,39 @@ class OrderActivity : AppCompatActivity(), OnOrderListener, OrderAux{
     override fun getOrderSelected(): Order = orderSelected
 
     private fun setupFirestore(){
-        val db = FirebaseFirestore.getInstance()
-        db.collection(Constants.COLL_REQUESTS)
-            .get()
-            .addOnSuccessListener {
-                for (document in it){
-                    val order = document.toObject(Order::class.java)
-                    order.id = document.id
-                    adapter.addOrder(order)
+        FirebaseAuth.getInstance().currentUser?.let { user->
+            val db = FirebaseFirestore.getInstance()
+            db.collection(Constants.COLL_REQUESTS)
+                //Para combinar (p.ej).orderBy() + .whereEqualTo(), hay que crear un "Index" en Firebase
+                .orderBy(Constants.PROP_DATE, Query.Direction.DESCENDING)
+                //Para que se carguen los datos de ese user y no de otro/s
+                .whereEqualTo(Constants.PROP_CLIENT_ID, user.uid)
+                //Filtros
+                /*.whereIn(Constants.PROP_STATUS, listOf(1,2))
+                .whereNotIn(Constants.PROP_STATUS, listOf(4))
+                .whereGreaterThan(Constants.PROP_STATUS, 2)
+                .whereLessThan(Constants.PROP_STATUS, 4)
+                .whereEqualTo(Constants.PROP_STATUS, 3)
+                .whereGreaterThanOrEqualTo(Constants.PROP_STATUS, 2)*/
+                //Esto es un indice
+                /*.whereEqualTo(Constants.PROP_CLIENT_ID, user.uid)
+                .orderBy(Constants.PROP_STATUS, Query.Direction.DESCENDING)*/
+                //Esto es un indice
+                /*.whereEqualTo(Constants.PROP_CLIENT_ID, user.uid)
+                .orderBy(Constants.PROP_STATUS, Query.Direction.ASCENDING)
+                .whereLessThan(Constants.PROP_STATUS, 4)
+                .orderBy(Constants.PROP_DATE, Query.Direction.DESCENDING)*/
+                .get()
+                .addOnSuccessListener {
+                    for (document in it){
+                        val order = document.toObject(Order::class.java)
+                        order.id = document.id
+                        adapter.addOrder(order)
+                    }
                 }
-            }
-            .addOnFailureListener {
-                Toast.makeText(this, "Error al consultar los datos", Toast.LENGTH_SHORT).show()
-            }
+                .addOnFailureListener {
+                    Toast.makeText(this, "Error al consultar los datos", Toast.LENGTH_SHORT).show()
+                }
+        }
     }
 }
